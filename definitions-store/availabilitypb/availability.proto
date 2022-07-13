@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package availabilitypb;
+
+option go_package="github.com/Dinesh789kumar12/CarApp/definitions-store/availabilitypb";
+
+
+message AvailabilityRequest {
+    Location Source=1;
+}
+
+message AvailabilityResponse {
+    string CarType=1;
+    string Location=2;
+    int32 Distance=3;
+}
+
+message Location {
+    int32 latitude=1;
+    int32 longitude=2;
+}
+
+service AvailabilityService {
+    rpc GetAvailability(AvailabilityRequest) returns (stream AvailabilityResponse) {};
+}
