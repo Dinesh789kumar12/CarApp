@@ -18,8 +18,7 @@ func RandomNumberGenerator() (x int, y int) {
 }
 
 //Distance b/w longitude and latitude
-func Distance(x1 int, y1 int, cr string) int32 {
-	x2, y2 := GetCoordinatebyName(cr)
+func Distance(x1 int, y1 int, x2 int, y2 int) int32 {
 	return int32(math.Sqrt(math.Pow(float64(x2-x1), 2) + math.Pow(float64(y2-y1), 2)))
 }
 
