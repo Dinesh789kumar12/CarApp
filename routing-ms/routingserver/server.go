@@ -2,11 +2,13 @@ package routingserver
 
 import (
 	"context"
+	"io"
 	"log"
 
-	"github.com/Dinesh789kumar12/CarApp/definitions-store/availabilitypb"
+	"github.com/Dinesh789kumar12/CarApp/definitions-store/ratepb"
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/routingpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Server struct {
@@ -14,43 +16,40 @@ type Server struct {
 }
 
 func (*Server) GetAvailability(stream routingpb.RoutingService_GetAvailabilityServer) error {
-	req, err := stream.Recv()
-	if err != nil {
-		log.Fatalf("error while stream.Recv(): %v", err.Error())
-	}
-	availabilityReq := availabilitypb.AvailabilityRequest{
-		Source: &availabilitypb.Location{
-			Latitude:  req.Source.Latitude,
-			Longitude: req.Source.Longitude,
-		},
-	}
-	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithInsecure())
+	cc, err := grpc.Dial("0.0.0.0:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Error while Dial: %v", err)
 	}
-
-	c := availabilitypb.NewAvailabilityServiceClient(cc)
-	strm, err := c.GetAvailability(context.Background(), &availabilityReq)
-	if err != nil {
-		log.Fatalf("error while c.GetAvailability: %v", err.Error())
-	}
-
-	response := []*routingpb.RoutingAvailabilityResponse{}
-	respAvailability := routingpb.ListRoutingAvailabilityResponse{}
+	log.Println("rate server started listening on port 50052")
+	c := ratepb.NewRoutingServiceClient(cc)
 	for {
-		resp, err := strm.Recv()
-		if err != nil {
-			break
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
 		}
-		response = append(response, &routingpb.RoutingAvailabilityResponse{
-			CarType:  resp.GetCarType(),
-			Distance: resp.GetDistance(),
-			Location: resp.GetLocation(),
-		})
-		log.Printf("received:%v", resp)
+		if err != nil {
+			log.Fatalf("Error when reading client request stream: %v", err)
+		}
+		reqRate := ratepb.RateRequest{
+			CarId:   req.GetCarId(),
+			CarType: req.GetCarType(),
+		}
+		resRate, err := c.GetRate(context.Background(), &reqRate)
+		if err != nil {
+			log.Fatalf("Error while dailing rate ms:%v", err.Error())
+		}
+		pr := resRate.GetPrice()
+		response := routingpb.RoutingAvailabilityResponse{
+			CarId:    req.GetCarId(),
+			CarType:  req.GetCarType(),
+			Location: "New Delhi",
+			Price:    pr,
+		}
+		res := stream.Send(&response)
+		log.Printf("sent to client:%v:", &response)
+		if res != nil {
+			log.Fatalf("Error when response was sent to the client: %v", res)
+		}
 	}
-	respAvailability.ListRoutingAvailabilityResponse = response
-	stream.Send(&respAvailability)
-
 	return nil
 }

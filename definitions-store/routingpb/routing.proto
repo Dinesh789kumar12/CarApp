@@ -6,24 +6,17 @@ option go_package="github.com/Dinesh789kumar12/CarApp/definitions-store/routingp
 
 
 message RoutingAvailabilityRequest {
-    Location Source=1;
+    int32 CarId=1;
+    string CarType=2;
 }
 
 message RoutingAvailabilityResponse {
-    string CarType=1;
-    string Location=2;
-    int32 Distance=3;
-}
-
-message ListRoutingAvailabilityResponse {
-    repeated RoutingAvailabilityResponse listRoutingAvailabilityResponse=1;
-}
-
-message Location {
-    int32 latitude=1;
-    int32 longitude=2;
+    int32 CarId=1;
+    string CarType=2;
+    string Location=3;
+    float price=4;
 }
 
 service RoutingService {
-    rpc GetAvailability(stream RoutingAvailabilityRequest) returns (stream ListRoutingAvailabilityResponse) {};
+    rpc GetAvailability(stream RoutingAvailabilityRequest) returns (stream RoutingAvailabilityResponse) {};
 }

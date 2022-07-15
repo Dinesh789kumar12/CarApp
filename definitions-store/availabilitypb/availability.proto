@@ -10,9 +10,10 @@ message AvailabilityRequest {
 }
 
 message AvailabilityResponse {
-    string CarType=1;
-    string Location=2;
-    int32 Distance=3;
+    int32 CarId=1;
+    string CarType=2;
+    string Location=3;
+    int32 Distance=4;
 }
 
 message Location {

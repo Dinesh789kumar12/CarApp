@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
@@ -20,4 +21,6 @@ func main() {
 	if err := availabilityServer.Serve(lis); err != nil {
 		log.Fatalf("error while availabilityServer.Serve: %v", err.Error())
 	}
+	fmt.Print()
+
 }

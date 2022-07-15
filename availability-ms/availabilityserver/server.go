@@ -17,21 +17,25 @@ func (*Server) GetAvailability(req *availabilitypb.AvailabilityRequest, strm ava
 	usrLoc := req.GetSource()
 	lat := usrLoc.Latitude
 	lon := usrLoc.Longitude
-	for _, c := range data.Carpool {
-		var a, b int
-		if c.Available {
-			a, b = utils.RandomNumberGenerator()
-			CarLocation := data.LocationName[a][b]
-			m := utils.Distance(a, b, int(lat), int(lon))
-			res := &availabilitypb.AvailabilityResponse{
-				CarType:  c.Model,
-				Location: CarLocation,
-				Distance: m,
+	for {
+		data.BookrandomCar()
+		for _, c := range data.Carpool {
+			var a, b int
+			if c.Available {
+				a, b = utils.RandomNumberGenerator()
+				CarLocation := data.LocationName[a][b]
+				m := utils.Distance(a, b, int(lat), int(lon))
+				res := &availabilitypb.AvailabilityResponse{
+					CarId:    c.CarId,
+					CarType:  c.Model,
+					Location: CarLocation,
+					Distance: m,
+				}
+				strm.Send(res)
+				log.Printf("Sent:%v", res)
+				time.Sleep(2 * time.Nanosecond)
 			}
-			strm.Send(res)
-			log.Printf("Sent:%v", res)
-			time.Sleep(2 * time.Nanosecond)
 		}
+		time.Sleep(20 * time.Second)
 	}
-	return nil
 }
