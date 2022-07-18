@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	data "github.com/Dinesh789kumar12/CarApp/availability-ms/data"
+	"github.com/Dinesh789kumar12/CarApp/availability-ms/data"
 )
 
 func RandomNumberGenerator() (x int, y int) {

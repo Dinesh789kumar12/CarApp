@@ -15,7 +15,7 @@ type Server struct {
 	routingpb.UnimplementedRoutingServiceServer
 }
 
-func (*Server) GetAvailability(stream routingpb.RoutingService_GetAvailabilityServer) error {
+func (*Server) GetRateBasedonAvailability(stream routingpb.RoutingService_GetRateBasedonAvailabilityServer) error {
 	cc, err := grpc.Dial("0.0.0.0:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Error while Dial: %v", err)
@@ -25,25 +25,30 @@ func (*Server) GetAvailability(stream routingpb.RoutingService_GetAvailabilitySe
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
-			return nil
+			log.Print("no more data")
+			break
 		}
 		if err != nil {
 			log.Fatalf("Error when reading client request stream: %v", err)
 		}
 		reqRate := ratepb.RateRequest{
-			CarId:   req.GetCarId(),
-			CarType: req.GetCarType(),
+			Car: &ratepb.Car{
+				CarId:   req.GetCar().GetCarId(),
+				CarType: req.GetCar().GetCarType(),
+			},
 		}
 		resRate, err := c.GetRate(context.Background(), &reqRate)
 		if err != nil {
 			log.Fatalf("Error while dailing rate ms:%v", err.Error())
 		}
-		pr := resRate.GetPrice()
+
 		response := routingpb.RoutingAvailabilityResponse{
-			CarId:    req.GetCarId(),
-			CarType:  req.GetCarType(),
-			Location: "New Delhi",
-			Price:    pr,
+			Car: &routingpb.Car{
+				CarId:   req.GetCar().GetCarId(),
+				CarType: req.GetCar().GetCarType(),
+			},
+			Location: req.GetLocation(),
+			Price:    resRate.GetPrice(),
 		}
 		res := stream.Send(&response)
 		log.Printf("sent to client:%v:", &response)

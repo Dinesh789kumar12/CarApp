@@ -15,6 +15,7 @@ func main() {
 		log.Fatalf("error while listening on port 50051: %v", err.Error())
 	}
 	log.Println("rate server started listening on port 50052")
+	log.Printf("Waiting for availble car....")
 	rateServer := grpc.NewServer()
 	ratepb.RegisterRoutingServiceServer(rateServer, &rateserver.Server{})
 	if err := rateServer.Serve(lis); err != nil {

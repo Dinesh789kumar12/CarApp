@@ -9,36 +9,45 @@ import (
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/availabilitypb"
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/routingpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
 
+	//Car Availability MS
 	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Error while Dial: %v", err)
 	}
 	log.Println("availability server started listening on port 50051")
-	cc1, err := grpc.Dial("0.0.0.0:3000", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Error while Dial: %v", err)
-	}
-	log.Println("routing server started listening on port 3000")
 	availabilityReq := availabilitypb.AvailabilityRequest{
 		Source: &availabilitypb.Location{
 			Latitude:  1,
 			Longitude: 2,
 		},
 	}
+
+	//Routing MS
+	cc1, err := grpc.Dial("0.0.0.0:3000", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Error while Dial: %v", err)
+	}
+	log.Println("routing server started listening on port 3000")
+
 	c := availabilitypb.NewAvailabilityServiceClient(cc)
 	client := routingpb.NewRoutingServiceClient(cc1)
+
 	strm, err := c.GetAvailability(context.Background(), &availabilityReq)
 	if err != nil {
 		log.Fatalf("error while c.GetAvailability: %v", err.Error())
 	}
-	stream, err := client.GetAvailability(context.Background())
+	log.Printf("Sent the mobile app co-ordinates and waiting for availble car for my location")
+
+	stream, err := client.GetRateBasedonAvailability(context.Background())
 	if err != nil {
 		log.Fatalf("error while client.GetAvailability: %v", err.Error())
 	}
+
 	var wg = new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
@@ -51,8 +60,11 @@ func main() {
 				log.Fatalf("Error when receiving response: %v", err)
 			}
 			routingRequest := routingpb.RoutingAvailabilityRequest{
-				CarId:   resp.GetCarId(),
-				CarType: resp.GetCarType(),
+				Car: &routingpb.Car{
+					CarId:   resp.GetCar().GetCarId(),
+					CarType: resp.GetCar().GetCarType(),
+				},
+				Location: resp.GetLocation(),
 			}
 			if err := stream.Send(&routingRequest); err != nil {
 				log.Fatalf("Error while send to Routing Server: %v", err)

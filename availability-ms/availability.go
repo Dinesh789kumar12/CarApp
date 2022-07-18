@@ -16,8 +16,10 @@ func main() {
 		log.Fatalf("error while listening on port 50051: %v", err.Error())
 	}
 	log.Println("availability server started listening on port 50051")
+	log.Printf("Waiting for mobile app coordinates...")
 	availabilityServer := grpc.NewServer()
 	availabilitypb.RegisterAvailabilityServiceServer(availabilityServer, &availabilityserver.Server{})
+
 	if err := availabilityServer.Serve(lis); err != nil {
 		log.Fatalf("error while availabilityServer.Serve: %v", err.Error())
 	}
