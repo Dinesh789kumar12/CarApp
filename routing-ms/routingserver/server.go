@@ -24,6 +24,7 @@ func (*Server) GetRateBasedonAvailability(stream routingpb.RoutingService_GetRat
 	c := ratepb.NewRoutingServiceClient(cc)
 	for {
 		req, err := stream.Recv()
+		log.Printf("received request from client:%v:", req)
 		if err == io.EOF {
 			log.Print("no more data")
 			break

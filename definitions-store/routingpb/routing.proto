@@ -4,6 +4,20 @@ package routingpb;
 
 option go_package="github.com/Dinesh789kumar12/CarApp/definitions-store/routingpb";
 
+message RoutingAvailabilityCarRequest{
+Location source=1;
+}
+
+message Location {
+    int32 latitude=1;
+    int32 longitude=2;
+}
+
+message RoutingAvailabilityCarResponse{
+    Car car=1;
+    string Location=2;
+    int32 Distance=3;
+}
 
 message RoutingAvailabilityRequest {
     Car car=1;
@@ -17,10 +31,12 @@ message Car{
 
 message RoutingAvailabilityResponse {
     Car car=1;
-    string Location=3;
-    float price=4;
+    string Location=2;
+    float price=3;
 }
+
 
 service RoutingService {
     rpc GetRateBasedonAvailability(stream RoutingAvailabilityRequest) returns (stream RoutingAvailabilityResponse) {};
+    rpc GetCarAvailability(RoutingAvailabilityCarRequest) returns (stream RoutingAvailabilityCarResponse){};
 }

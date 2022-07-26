@@ -15,7 +15,7 @@ import (
 func main() {
 
 	//Car Availability MS
-	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithInsecure())
+	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Error while Dial: %v", err)
 	}
@@ -70,8 +70,7 @@ func main() {
 				log.Fatalf("Error while send to Routing Server: %v", err)
 			}
 
-			//time.Sleep(100 * time.Millisecond)
-			log.Printf("sent request to client: %s", &routingRequest)
+			//log.Printf("sent request to client: %s", &routingRequest)
 		}
 		if err := stream.CloseSend(); err != nil {
 			log.Fatalf("Error while close send to RS: %v", err)
