@@ -5,27 +5,19 @@ import (
 	"io"
 	"log"
 	"sync"
+	"time"
 
-	"github.com/Dinesh789kumar12/CarApp/definitions-store/availabilitypb"
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/routingpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
-
-	//Car Availability MS
-	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Error while Dial: %v", err)
-	}
-	log.Println("availability server started listening on port 50051")
-	availabilityReq := availabilitypb.AvailabilityRequest{
-		Source: &availabilitypb.Location{
-			Latitude:  1,
-			Longitude: 2,
-		},
-	}
+	log.Println("**********************************************************************************")
+	log.Println("")
+	log.Println("\t\tMobile App Client\t\t")
+	log.Println("")
+	log.Println("**********************************************************************************")
 
 	//Routing MS
 	cc1, err := grpc.Dial("0.0.0.0:3000", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -34,12 +26,20 @@ func main() {
 	}
 	log.Println("routing server started listening on port 3000")
 
-	c := availabilitypb.NewAvailabilityServiceClient(cc)
 	client := routingpb.NewRoutingServiceClient(cc1)
+	routingReq := routingpb.RoutingAvailabilityCarRequest{
+		Source: &routingpb.Location{
+			Latitude:  1,
+			Longitude: 2,
+		},
+	}
+	log.Println("Sending the present coordinate :")
+	log.Println("Latitute: 1")
+	log.Println("Longitute: 2")
 
-	strm, err := c.GetAvailability(context.Background(), &availabilityReq)
+	strm, err := client.GetCarAvailability(context.Background(), &routingReq)
 	if err != nil {
-		log.Fatalf("error while c.GetAvailability: %v", err.Error())
+		log.Fatalf("error while GetCarAvailability: %v", err.Error())
 	}
 	log.Printf("Sent the mobile app co-ordinates and waiting for availble car for my location")
 
@@ -48,6 +48,7 @@ func main() {
 		log.Fatalf("error while client.GetAvailability: %v", err.Error())
 	}
 
+	log.Println("Waiting for the available car....")
 	var wg = new(sync.WaitGroup)
 	wg.Add(1)
 	go func() {
@@ -80,12 +81,21 @@ func main() {
 	// Use a go routine to receive response messages from the server
 	wg.Add(1)
 	go func() {
+		var count = 1
 		for {
+			if count == 4 {
+				count = 1
+			}
+			//main code
 			res, err := stream.Recv()
 			if err != nil {
 				break
 			}
-			log.Printf("resceived response from server :%v", res)
+			if count == 1 {
+				log.Println("Received top cars that near to my location :", time.Now().Format(time.Stamp))
+			}
+			log.Printf("%v:received response from server :%v", count, res)
+			count++
 		}
 	}()
 	wg.Wait()

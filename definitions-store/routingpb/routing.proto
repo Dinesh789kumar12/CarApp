@@ -35,8 +35,10 @@ message RoutingAvailabilityResponse {
     float price=3;
 }
 
+message Null {};
 
 service RoutingService {
     rpc GetRateBasedonAvailability(stream RoutingAvailabilityRequest) returns (stream RoutingAvailabilityResponse) {};
     rpc GetCarAvailability(RoutingAvailabilityCarRequest) returns (stream RoutingAvailabilityCarResponse){};
+    rpc GetLocation(RoutingAvailabilityCarRequest) returns (Null);
 }

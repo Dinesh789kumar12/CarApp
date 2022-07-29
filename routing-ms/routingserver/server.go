@@ -4,7 +4,9 @@ import (
 	"context"
 	"io"
 	"log"
+	"sync"
 
+	"github.com/Dinesh789kumar12/CarApp/definitions-store/availabilitypb"
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/ratepb"
 	"github.com/Dinesh789kumar12/CarApp/definitions-store/routingpb"
 	"google.golang.org/grpc"
@@ -57,5 +59,52 @@ func (*Server) GetRateBasedonAvailability(stream routingpb.RoutingService_GetRat
 			log.Fatalf("Error when response was sent to the client: %v", res)
 		}
 	}
+	return nil
+}
+
+func (*Server) GetCarAvailability(req *routingpb.RoutingAvailabilityCarRequest, stream routingpb.RoutingService_GetCarAvailabilityServer) error {
+
+	cc, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Error while Dial: %v", err)
+	}
+	log.Println("connection established with Availability MS....")
+	defer cc.Close()
+	c := availabilitypb.NewAvailabilityServiceClient(cc)
+	reqAvailability := availabilitypb.AvailabilityRequest{
+		Source: &availabilitypb.Location{
+			Latitude:  req.GetSource().GetLatitude(),
+			Longitude: req.GetSource().GetLongitude(),
+		},
+	}
+	streamAvailability, err := c.GetAvailability(context.Background(), &reqAvailability)
+	if err != nil {
+		log.Fatalf("Error while dailing rate ms:%v", err.Error())
+	}
+	var wg = new(sync.WaitGroup)
+	wg.Add(1)
+	go func() {
+		for {
+			resp, err := streamAvailability.Recv()
+			if err == io.EOF {
+				log.Print("no more data")
+				break
+			}
+			if err != nil {
+				log.Fatalf("Error when reading client request stream: %v", err)
+			}
+			response := routingpb.RoutingAvailabilityCarResponse{
+				Car: &routingpb.Car{
+					CarId:   resp.GetCar().GetCarId(),
+					CarType: resp.GetCar().GetCarType(),
+				},
+				Location: resp.GetLocation(),
+				Distance: resp.GetDistance(),
+			}
+
+			stream.Send(&response)
+		}
+	}()
+	wg.Wait()
 	return nil
 }
