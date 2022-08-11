@@ -22,7 +22,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RoutingServiceClient interface {
-	GetAvailability(ctx context.Context, opts ...grpc.CallOption) (RoutingService_GetAvailabilityClient, error)
+	GetRateBasedonAvailability(ctx context.Context, opts ...grpc.CallOption) (RoutingService_GetRateBasedonAvailabilityClient, error)
+	GetCarAvailability(ctx context.Context, in *RoutingAvailabilityCarRequest, opts ...grpc.CallOption) (RoutingService_GetCarAvailabilityClient, error)
+	GetLocation(ctx context.Context, in *RoutingAvailabilityCarRequest, opts ...grpc.CallOption) (*Null, error)
 }
 
 type routingServiceClient struct {
@@ -33,30 +35,30 @@ func NewRoutingServiceClient(cc grpc.ClientConnInterface) RoutingServiceClient {
 	return &routingServiceClient{cc}
 }
 
-func (c *routingServiceClient) GetAvailability(ctx context.Context, opts ...grpc.CallOption) (RoutingService_GetAvailabilityClient, error) {
-	stream, err := c.cc.NewStream(ctx, &RoutingService_ServiceDesc.Streams[0], "/routingpb.RoutingService/GetAvailability", opts...)
+func (c *routingServiceClient) GetRateBasedonAvailability(ctx context.Context, opts ...grpc.CallOption) (RoutingService_GetRateBasedonAvailabilityClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RoutingService_ServiceDesc.Streams[0], "/routingpb.RoutingService/GetRateBasedonAvailability", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &routingServiceGetAvailabilityClient{stream}
+	x := &routingServiceGetRateBasedonAvailabilityClient{stream}
 	return x, nil
 }
 
-type RoutingService_GetAvailabilityClient interface {
+type RoutingService_GetRateBasedonAvailabilityClient interface {
 	Send(*RoutingAvailabilityRequest) error
 	Recv() (*RoutingAvailabilityResponse, error)
 	grpc.ClientStream
 }
 
-type routingServiceGetAvailabilityClient struct {
+type routingServiceGetRateBasedonAvailabilityClient struct {
 	grpc.ClientStream
 }
 
-func (x *routingServiceGetAvailabilityClient) Send(m *RoutingAvailabilityRequest) error {
+func (x *routingServiceGetRateBasedonAvailabilityClient) Send(m *RoutingAvailabilityRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *routingServiceGetAvailabilityClient) Recv() (*RoutingAvailabilityResponse, error) {
+func (x *routingServiceGetRateBasedonAvailabilityClient) Recv() (*RoutingAvailabilityResponse, error) {
 	m := new(RoutingAvailabilityResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -64,11 +66,54 @@ func (x *routingServiceGetAvailabilityClient) Recv() (*RoutingAvailabilityRespon
 	return m, nil
 }
 
+func (c *routingServiceClient) GetCarAvailability(ctx context.Context, in *RoutingAvailabilityCarRequest, opts ...grpc.CallOption) (RoutingService_GetCarAvailabilityClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RoutingService_ServiceDesc.Streams[1], "/routingpb.RoutingService/GetCarAvailability", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &routingServiceGetCarAvailabilityClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type RoutingService_GetCarAvailabilityClient interface {
+	Recv() (*RoutingAvailabilityCarResponse, error)
+	grpc.ClientStream
+}
+
+type routingServiceGetCarAvailabilityClient struct {
+	grpc.ClientStream
+}
+
+func (x *routingServiceGetCarAvailabilityClient) Recv() (*RoutingAvailabilityCarResponse, error) {
+	m := new(RoutingAvailabilityCarResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *routingServiceClient) GetLocation(ctx context.Context, in *RoutingAvailabilityCarRequest, opts ...grpc.CallOption) (*Null, error) {
+	out := new(Null)
+	err := c.cc.Invoke(ctx, "/routingpb.RoutingService/GetLocation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoutingServiceServer is the server API for RoutingService service.
 // All implementations must embed UnimplementedRoutingServiceServer
 // for forward compatibility
 type RoutingServiceServer interface {
-	GetAvailability(RoutingService_GetAvailabilityServer) error
+	GetRateBasedonAvailability(RoutingService_GetRateBasedonAvailabilityServer) error
+	GetCarAvailability(*RoutingAvailabilityCarRequest, RoutingService_GetCarAvailabilityServer) error
+	GetLocation(context.Context, *RoutingAvailabilityCarRequest) (*Null, error)
 	mustEmbedUnimplementedRoutingServiceServer()
 }
 
@@ -76,8 +121,14 @@ type RoutingServiceServer interface {
 type UnimplementedRoutingServiceServer struct {
 }
 
-func (UnimplementedRoutingServiceServer) GetAvailability(RoutingService_GetAvailabilityServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetAvailability not implemented")
+func (UnimplementedRoutingServiceServer) GetRateBasedonAvailability(RoutingService_GetRateBasedonAvailabilityServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetRateBasedonAvailability not implemented")
+}
+func (UnimplementedRoutingServiceServer) GetCarAvailability(*RoutingAvailabilityCarRequest, RoutingService_GetCarAvailabilityServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetCarAvailability not implemented")
+}
+func (UnimplementedRoutingServiceServer) GetLocation(context.Context, *RoutingAvailabilityCarRequest) (*Null, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLocation not implemented")
 }
 func (UnimplementedRoutingServiceServer) mustEmbedUnimplementedRoutingServiceServer() {}
 
@@ -92,30 +143,69 @@ func RegisterRoutingServiceServer(s grpc.ServiceRegistrar, srv RoutingServiceSer
 	s.RegisterService(&RoutingService_ServiceDesc, srv)
 }
 
-func _RoutingService_GetAvailability_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(RoutingServiceServer).GetAvailability(&routingServiceGetAvailabilityServer{stream})
+func _RoutingService_GetRateBasedonAvailability_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RoutingServiceServer).GetRateBasedonAvailability(&routingServiceGetRateBasedonAvailabilityServer{stream})
 }
 
-type RoutingService_GetAvailabilityServer interface {
+type RoutingService_GetRateBasedonAvailabilityServer interface {
 	Send(*RoutingAvailabilityResponse) error
 	Recv() (*RoutingAvailabilityRequest, error)
 	grpc.ServerStream
 }
 
-type routingServiceGetAvailabilityServer struct {
+type routingServiceGetRateBasedonAvailabilityServer struct {
 	grpc.ServerStream
 }
 
-func (x *routingServiceGetAvailabilityServer) Send(m *RoutingAvailabilityResponse) error {
+func (x *routingServiceGetRateBasedonAvailabilityServer) Send(m *RoutingAvailabilityResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *routingServiceGetAvailabilityServer) Recv() (*RoutingAvailabilityRequest, error) {
+func (x *routingServiceGetRateBasedonAvailabilityServer) Recv() (*RoutingAvailabilityRequest, error) {
 	m := new(RoutingAvailabilityRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
+}
+
+func _RoutingService_GetCarAvailability_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RoutingAvailabilityCarRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(RoutingServiceServer).GetCarAvailability(m, &routingServiceGetCarAvailabilityServer{stream})
+}
+
+type RoutingService_GetCarAvailabilityServer interface {
+	Send(*RoutingAvailabilityCarResponse) error
+	grpc.ServerStream
+}
+
+type routingServiceGetCarAvailabilityServer struct {
+	grpc.ServerStream
+}
+
+func (x *routingServiceGetCarAvailabilityServer) Send(m *RoutingAvailabilityCarResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _RoutingService_GetLocation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutingAvailabilityCarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoutingServiceServer).GetLocation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/routingpb.RoutingService/GetLocation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoutingServiceServer).GetLocation(ctx, req.(*RoutingAvailabilityCarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 // RoutingService_ServiceDesc is the grpc.ServiceDesc for RoutingService service.
@@ -124,13 +214,23 @@ func (x *routingServiceGetAvailabilityServer) Recv() (*RoutingAvailabilityReques
 var RoutingService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "routingpb.RoutingService",
 	HandlerType: (*RoutingServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetLocation",
+			Handler:    _RoutingService_GetLocation_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetAvailability",
-			Handler:       _RoutingService_GetAvailability_Handler,
+			StreamName:    "GetRateBasedonAvailability",
+			Handler:       _RoutingService_GetRateBasedonAvailability_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "GetCarAvailability",
+			Handler:       _RoutingService_GetCarAvailability_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "routing.proto",

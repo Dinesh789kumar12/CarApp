@@ -14,12 +14,14 @@ type Server struct {
 }
 
 func (*Server) GetRate(ctx context.Context, req *ratepb.RateRequest) (*ratepb.RateResponse, error) {
-	reqCar := req.GetCarType()
-	price := rateutils.GetRatebyTimeAndDistance(reqCar, time.Now().String(), 2)
+	reqCar := &ratepb.Car{
+		CarId:   req.GetCar().GetCarId(),
+		CarType: req.GetCar().GetCarType(),
+	}
+	price := rateutils.GetRatebyTimeAndDistance(req.GetCar().GetCarType(), time.Now().String(), 2)
 	resRate := ratepb.RateResponse{
-		CarId:   req.GetCarId(),
-		CarType: reqCar,
-		Price:   price,
+		Car:   reqCar,
+		Price: price,
 	}
 	log.Printf("sent to client:%v", &resRate)
 	return &resRate, nil
